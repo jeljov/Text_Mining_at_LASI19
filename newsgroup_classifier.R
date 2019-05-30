@@ -26,7 +26,7 @@
 ## For the binary classification task, we will use the group discussing guns 
 ## ('talk.politics.guns') and the one on Mideast ('talk.politics.mideast'), both within 
 ## the broader 'politics' topic. The rationale for choosing these two groups:
-## - The groups' discussion covers the topics that can be expected in a discussion forum
+## - The groups' discussions cover the topics that can be expected in a discussion forum
 ##   of a course dealing with contemporary political issues.  
 ## - Being topically closely related, the two groups will pose a challenge for a 
 ##   classifier - it is not an easy task to differentiate between groups of posts 
@@ -178,7 +178,7 @@ url_tokens <- tokens_select(x = train_tokens,
                             valuetype = "regex",
                             verbose = TRUE) 
 # no URLs...
-# Note: the used URL regex pattern is taken from: http://urlregex.com/
+# NB: the used URL regex pattern is taken from: http://urlregex.com/
 # It is not a perfect one, but covers majority of cases.
 
 
@@ -187,12 +187,14 @@ url_tokens <- tokens_select(x = train_tokens,
 # will probably be removed later (after applying a word weighting scheme) due to their 
 # low relevance/weight 
 email_pattern <- "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
-# taken from: https://emailregex.com/
-# an alternative: "^[\\w-\\.]+@(\\w+[\\.-]?)+\\w{2,4}$"
 train_tokens <- tokens_remove(x = train_tokens, 
                               pattern = email_pattern, 
                               valuetype = "regex", 
                               verbose = TRUE)
+
+# NB. the applied regex pattern is taken from: https://emailregex.com/ ;
+# an alternative one: "^[\\w-\\.]+@(\\w+[\\.-]?)+\\w{2,4}$"
+
 train_2cl$post_txt[9]
 train_tokens[[9]]
 
@@ -204,7 +206,7 @@ train_tokens[[9]]
 
 
 # Looking again at the example post, one may observe the presence of tokens with 1 or 2 
-# characters only; these should be removed as they rarely bear any meaning
+# characters only; these will be removed as they rarely bear any meaning
 train_tokens <- tokens_keep(x = train_tokens, min_nchar = 3)
 train_tokens[[11]]
 
@@ -295,9 +297,8 @@ train_dfm <- dfm_tfidf(train_dfm,
                        scheme_tf = 'prop', # L1 normalization
                        scheme_df = 'inverse') # default option
 
-# Considering the large number of features (~16.6K) and the high level of
-# sparsity, we should consider doing a feature selection based on the 
-# computed feature weights (TF-IDF values)
+# Given the large number of features (~16.6K) and the high level of
+# sparsity, we should consider doing feature selection. 
 
 # Examine total (corpus-level) TF-IDF value for each word
 summary(colSums(train_dfm))
@@ -349,10 +350,10 @@ train_df <- create_feature_df(train_dfm = train_dfm_reduced,
 # As per best practices, we will leverage cross validation (CV) for our
 # modeling process. In particular, we will perform 5-fold CV to
 # tune parameters and find the best performing model.
-# (N.B. we restrict ourselves here to 5-fold CV so that the training 
+# (NB. we restrict ourselves here to 5-fold CV so that the training 
 # does not last overly long. When working on your own, better use 
 # higher number of folds, typically 10 folds, and even do repeated CV
-# to achieve better performance).
+# to get a better estimation of the model performance).
 
 # The *caret* package will be used for model building through CV
 library(caret)
@@ -405,8 +406,7 @@ tfidf_best_results
 ##    chance of passing the exam)
 ## - specificity (true negative rate) = TN/(TN+FP)
 ##    (to continue with the example, specificity would be the percentage of students who 
-##    failed the exam and were correctly identified as having a high chance of doing poorly 
-##    on the exam) 
+##    failed the exam and were correctly identified as likely to fail) 
 
 ## Note that in this example we do not have 'true' positive and negative classes,
 ## that is, no preference for better predicting one class ('guns') over the other 
@@ -421,7 +421,7 @@ tfidf_best_results
 # We can use the final model to examine feature importance
 rpart_cv_1$finalModel$variable.importance %>%
   sort(decreasing = TRUE) %>%
-  names() %>%
+#  names() %>%
   head(20)
 
 # Another way to inspect relevant features
@@ -570,7 +570,7 @@ rpart_cv_2$finalModel$variable.importance %>%
   head(20)
 
 # and using caret's metric for variable importance:
-plot(varImp(rpart_cv_2), top=20)
+varImp(rpart_cv_2) %>% plot(top=20)
 
 # In the next step, we will apply a more sophisticated feature reduction method.
 # In particular, we'll apply Singular Value Decomposition (SVD) to the DTM of
@@ -582,8 +582,8 @@ plot(varImp(rpart_cv_2), top=20)
 ####################################
 
 # We will now use Singular Value Decomposition (SVD) to reduce the number 
-# of features (ngrams) to a smaller set that explains a large portion of 
-# variability in the data.
+# of features (ngrams) to a significantly smaller set that explains 
+# a large portion of variability in the data.
 
 # Suggested reading for SVD and its use in text analysis 
 # (Latent Semantic Analysis):
@@ -609,7 +609,7 @@ train_dfm_2 <- dfm_tfidf(train_dfm_2, scheme_tf = 'prop', scheme_df = 'inverse')
 
 # We will reduce the dimensionality down to 300 columns. This number is chosen as it
 # is often recommended (based on the experience in practice).
-# (N.B. To get the best results, the number of dimensions would have to be  
+# (NB. To get the best results, the number of dimensions would have to be  
 # experimentally determined, by trying several different values and comparing 
 # the performance of the resulting models)
 
@@ -689,14 +689,14 @@ train_svd_df <- cbind(Label = train_2cl$newsgroup, data.frame(svd_res$v))
 # For the mtry parameter, we will consider 10 different values between the minimum
 # (1 feature) and the maximum possible value (all features). 
 n_features <- ncol(train_svd_df)-1
-mtry_Grid <- expand.grid( .mtry = seq(from = 1, to = n_features, length.out = 10),
+param_Grid <- expand.grid( .mtry = seq(from = 1, to = n_features, length.out = 10),
                          .splitrule = "gini", # gini is a measure of node 'purity'
                          .min.node.size = c(2,3)) 
 
 # NOTE: The following code takes a long time to run. Here is why:
 # We are performing 5-fold CV. That means we will examine each model configuration 
 # 5 times. We have 20 configurations as we are asking caret to try 10 different
-# values of the mtry parameter and 2 different values of the min.node.size paramter. 
+# values of the mtry parameter and 2 different values of the min.node.size parameter. 
 # In addition, we are asking RF to build 1000 trees. Lastly, when the best values 
 # for the parameters are chosen, caret will use them to build the final model using 
 # all the training data. So, the number of trees we're building is:
@@ -707,7 +707,7 @@ rf_cv_1 <- cross_validate_classifier(seed,
                                      nclust = 3,
                                      train_data = train_svd_df,
                                      ml_method = "ranger",
-                                     grid_spec = mtry_Grid)
+                                     grid_spec = param_Grid)
 
 # (n.b. the above f. call takes about an hour to execute)
 
@@ -819,7 +819,7 @@ setdiff(featnames(train_dfm_2), featnames(test_dfm))
 # 1 - Normalize term counts in each document (i.e. each row)
 # 2 - Perform IDF multiplication using training IDF values
 #
-# N.B.: we'll use IDF values computed on the training set, since 
+# NB. We'll use IDF values computed on the training set, since 
 # IDF is always computed on a representative and sufficiently large
 # corpus, and in production settings (when the classifier is deployed),
 # we won't have sufficiently large number of unclassified posts to use
@@ -859,13 +859,15 @@ dim(test_tfidf)
 # 
 # Before applying this formula, let us examine why and how do we use it
 
-# As an example, let's use the first document from the training set, 
-# that is, the TF-IDF representation of the first post in the training set
+# To demonstrate that the above formula will allow us to represent documents
+# using the SVD dimensions, we'll examine how it can be used on a document 
+# from the training set, since for documents from the training set we know 
+# what SVD representation looks like (it is given by the V matrix)
 example_doc <- as.matrix(train_dfm_2)[1,]
 
 # For convenience, we'll introduce:
-sigma_inverse <- 1 / readRDS("models/svd/sigma.Rdata")       # 1 / svd_res$d
-u_transpose <- readRDS("models/svd/left_sv.Rdata") %>% t()   # t(svd_res$u) 
+sigma_inverse <- 1 / svd_res$d # 1 / readRDS("models/svd/sigma.Rdata") 
+u_transpose <- t(svd_res$u) # readRDS("models/svd/left_sv.Rdata") %>% t() 
 
 # The projection of the example document in the SVD space, based on the 
 # above given formula:
@@ -873,14 +875,14 @@ example_doc_hat <- as.vector(sigma_inverse * u_transpose %*% example_doc)
 # Look at the first 10 components of projected document...
 example_doc_hat[1:10]
 # ... and the corresponding row in the document space produced by SVD (the V matrix)
-v <- readRDS("models/svd/right_sv.Rdata")
-v[1,1:10]
-# svd_res$v[1, 1:10]
+svd_res$v[1, 1:10]
+# v <- readRDS("models/svd/right_sv.Rdata")
+# v[1,1:10]
 # The two vectors are almost identical (note the values are expressed in e-04, e-05,...).
 # In fact, the differences are so tiny that when we compute cosine similarity 
 # between the two vectors, the similarity turns to be equal to 1:
 library(lsa)
-cosine(example_doc_hat, v[1,])  # svd_res$v[1,])
+cosine(example_doc_hat, svd_res$v[1,]) # v[1,]
 #
 # Why is this useful?
 # It shows that using the above given formula, we can transform any document into
@@ -918,13 +920,14 @@ cm <- table(Actual = test_svd_df$Label, Predicted = preds)
 cm
 
 # 2) compute evaluation measures
+# (note that the get_eval_measures() function is defined in tm_utils.R)
 eval_metrics <- c('Sensitivity', 'Specificity', 'AUC')
 get_eval_measures(rf_cv_1, test_svd_df, eval_metrics)
 
 # Let's compare these results with those obtained on the training data 
 svd_best_res[, c('Sens', 'Spec', 'ROC')]
 
-# The performance is lower than on the train set, which is expected
+# The performance is lower than on the training set, which is expected
 # (one should almost always expect lower performance on the test set)
 # However, it is still rather good.
 

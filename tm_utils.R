@@ -99,8 +99,8 @@ plot_word_weight_distr <- function(wweights, lbl, bin_width = 0.1) {
   ggplot(data = data.frame(weights = wweights), mapping = aes(x = weights)) + 
     geom_histogram(aes(y=..density..),  # Histogram with density instead of count on y-axis
                    binwidth=bin_width,
-                   colour="black", fill="white") +    
-    geom_density(alpha=.2) +
+                   colour="black", fill="grey") +    
+    geom_density(alpha=.2, size=1) +
     xlab(lbl) +
     theme_bw() 
 }
@@ -141,7 +141,7 @@ cross_validate_classifier <- function(seed,
                            search = "grid",
                            summaryFunction = twoClassSummary, # computes sensitivity, specificity, AUC
                            classProbs = TRUE, # required for the twoClassSummary f.
-                           allowParallel = TRUE) # default value, but to emphasize the use of parallelization
+                           allowParallel = TRUE) # default value; set here to emphasize the use of parallelization
   
   # Create a cluster to work on nclust logical cores;
   # what it means (simplified): create nclust instances of RStudio and 
@@ -155,7 +155,7 @@ cross_validate_classifier <- function(seed,
   
   set.seed(seed)
   if (ml_method=="rpart")
-    model_cv <- train(x = train_data[,names(train_data) != 'Label'],
+    model_cv <- train(x = train_data %>% select(-Label),
                       y = train_data$Label,
                       method = 'rpart', 
                       trControl = cv_cntrl, 
@@ -163,7 +163,7 @@ cross_validate_classifier <- function(seed,
                       metric = 'ROC')
   if (ml_method=="ranger") {
     require(ranger)
-    model_cv <- train(x = train_data[,names(train_data) != 'Label'],
+    model_cv <- train(x = train_data %>% select(-Label),
                       y = train_data$Label,
                       method = 'ranger', 
                       trControl = cv_cntrl, 

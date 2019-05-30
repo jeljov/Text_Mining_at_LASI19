@@ -16,9 +16,9 @@
 ## Pre-trained GloVe models are available for download from:
 ## https://nlp.stanford.edu/projects/glove/ 
 ## We will use one of the models bundled within the "glove.6B.zip" data file. 
-## Some facts about these models:
-## - they were trained on the corpus that combined a 2014 Wikipedia dump and Gigaword5,
-##   and consisted of 6 billion tokens (hence 6B in the file name)
+## Some facts about the glove.6B models:
+## - they were trained on the corpus that resulted from combining a 2014 Wikipedia dump
+##   and Gigaword5, and consisted of 6 billion tokens (hence 6B in the name)
 ## - after tokenizing and lowercasing the corpus, 400K most frequent words were used
 ##   to build the vocabulary
 ## - the zip includes models with 50, 100, 200, and 300 dimension vectors 
@@ -48,13 +48,14 @@
 # - ggrepel: an addition to ggplot; provides text and label geoms for 'ggplot2' that help to avoid 
 #   overlapping text labels; labels repel away from each other and away from the data points.
 # - tsne - a "pure R" implementation of the t-SNE (T-distributed Stochastic Neighbor Embedding)
-#   algorithm 
+#   algorithm for dimensionality reduction
 # - Rtsne - an R wrapper around the fast t-SNE implementation by Van der Maaten (the creator of t-SNE)
 
-# We will initally load only the package that will be used throughout this script
+# We will initially load only the package that will be used throughout this script
 # and include additional ones as they become needed
 library(dplyr)
 
+# Also, load a script with some auxiliary functions
 source("word_vec_utils.R")
 
 ##############################################
@@ -65,15 +66,15 @@ source("word_vec_utils.R")
 
 # Load a pre-trained GloVe word vectors model. In particular, we'll use the glove.6B.300d 
 # model - the model with 300 dimension word vectors. 
-# N.B. regarding the vector dimensions, higher vector dimension is often associated with 
+# NB. Regarding the vector dimensions, higher vector dimension is often associated with 
 # higher precision, but also tends to include more random error and slower operations. 
 # Likely choices are in the range 100-300.
 
 # Read in the the model 
 # (Note: change the 'glove_6B_300d_dir' variable to the path of the directory 
 #  where the "glove.6B.300d.txt" file is stored on your computer)
-glove_6B_300d_dir <- "~/R Studio Projects/Large datasets/glove.6B/"
-# "C:\\Users\\jovanje\\Documents\\LASI 2019\\glove.6B\\"
+# glove_6B_300d_dir <- "~/R Studio Projects/Large datasets/glove.6B/"
+glove_6B_300d_dir <- "C:\\Users\\jovanje\\Documents\\LASI 2019\\glove.6B\\"
 g6b_300d <- scan(file = paste0(glove_6B_300d_dir, 'glove.6B.300d.txt'), what="", sep="\n")
 
 # What we have read - g6b_300d - is in fact a huge character vector, 
@@ -141,7 +142,7 @@ glove_model %>% closest_to("awesome", n=20, fancy_names = FALSE)
 # the computed similarity scores are cosine similarities in the vector 
 # space: 1.0 means perfect similarity, 0 is no correlation, and -1.0 is 
 # complete opposition. However, "opposition" in a word vector space is 
-# often different from the colloquial use of "opposite," and very rare.
+# often different from the colloquial use of "opposite".
 # For example, 10th closest word to "awesome" is "awful"; the reason:
 # those two words fullfil the same role - they are used to describe 
 # some experience, opinion, taste, and the like; this kind of 'role-based
@@ -181,7 +182,8 @@ w2v_plot(model = glove_model,
          search_terms = "canada", 
          n_nearest = 500, 
          out_dir = "results")
-# (note: the function stores the visualization as a jpeg file in the out_dir folder)
+# (note: the function stores the visualization as a jpeg file in the out_dir folder
+# and it will expect for such a folder to exist)
 
 
 # We can also look for words that are closest to a combination of some other words.
@@ -206,16 +208,16 @@ glove_model %>% closest_to(~ "paris" - "france" + "germany")
 # Another way to consider the same vector arithmetics is as follows:
 glove_model %>% closest_to(~ "paris" + ("germany" - "france"))
 # You have the vector `("germany" - "france")` that stands for things that are 
-# associated with 'germany' but not 'france'; we then add this vector to "paris", 
+# associated with 'germany' but not with 'france'; we then add this vector to "paris", 
 # and that way we move to a new neighborhood of things that are common to 'paris' 
-# and 'germany'
+# and 'germany' (stripped of 'france')
 
 # We can also use this kind of arithemtics to move along a gender vector:
 glove_model %>% closest_to(~ "brother" + ("she" - "he"))
 
 
-# For additional insights into wordVectors' functions for exploration of word 
-# vector models, examine the wordVectors' Exploration vignette that demonstrates 
+# For additional insights into wordVectors' functions for exploring word vector
+# models, examine the wordVectors' Exploration vignette that demonstrates 
 # those functions on a model trained on teaching evaluations:
 # https://github.com/bmschmidt/wordVectors/blob/master/vignettes/exploration.Rmd
 

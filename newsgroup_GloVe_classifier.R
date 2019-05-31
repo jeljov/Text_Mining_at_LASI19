@@ -9,8 +9,8 @@
 
 ## In this script, we will examine some simple ways of using pre-trained word vectors 
 ## to create document features that can be subsequently used for the classification
-## task. These consists of combining, in different ways, word vectors of the 
-## document's words; often used combinations include:
+## task. These consist of combining, in different ways, word vectors of the words 
+## a document consists of; often used combinations include:
 ## - computing the average of the document's word vectors 
 ## - computing weighted average of the document's word vectors
 ## - taking min and max values of weighted word vectors and concatenating them.
@@ -21,7 +21,7 @@
 ##
 ## We will also examine the use of Word Mover Distance (WMD) for computing document 
 ## similarity by leveraging vector representation (word vectors / embeddings) of
-## words the documents consist of. The computed document similarities are used as
+## words the documents consist of. The computed document similarities are then used as
 ## the input for the K Nearest Neighbours (kNN) classification algorithm. This method
 ## is also found to perform well on short texts.
 
@@ -69,7 +69,7 @@ usenet_data <- usenet_data %>%
   filter(newsgroup %in% c('talk.politics.guns', 'talk.politics.mideast'))
 
 # Since the approach we intend to apply is suitable for shorter texts,
-# we should check the length of the selected posts and remove any overly long ones. 
+# we should check the length of the selected posts and remove overly long ones. 
 # An easy way to do that is to rely on the readily available statistics for
 # quanteda corpus. So, we'll start by creating a quanteda corpus out of the 
 # selected newsgroups posts:
@@ -166,7 +166,7 @@ tail(post_words, n = 100)
 # (Note: change the 'glove_6B_300d_dir' variable to the path of the directory 
 #  where the "glove.6B.300d.txt" file is stored on your computer)
 glove_6B_300d_dir <- "C:\\Users\\jovanje\\Documents\\LASI 2019\\glove.6B\\"
-  # "~/R Studio Projects/Large datasets/glove.6B/"
+#glove_6B_300d_dir <- "~/R Studio Projects/Large datasets/glove.6B/"
 g6b_300d <- scan(file = paste0(glove_6B_300d_dir, 'glove.6B.300d.txt'), what="", sep="\n")
 
 # Create a data frame out of the large vector read from the file
@@ -203,13 +203,14 @@ tokens_to_replace <- unlist(tokens_to_replace) %>% unique()
 replacements <- gsub(pattern = "([a-z]+)'s", replacement = "\\1", 
                      x = tokens_to_replace)
 # Now, re-create DTM
-post_dtm <- dfm_replace(post_dtm, pattern = tokens_to_replace,
+post_dtm <- dfm_replace(post_dtm, 
+                        pattern = tokens_to_replace,
                         replacement = replacements, verbose = TRUE)
-post_dtm
+
 # Again, get the words that are present both in the DTM and GloVe model
 words_to_keep <- intersect(featnames(post_dtm), glove_words)
 length(words_to_keep)/length(post_words)
-# 13840 - only slight improvement
+# 13840 (83.33%) - a slight improvement
 
 # Create a new DTM that will keep only those words (columns)
 # from the original DTM (post_dtm) that are present in the GloVe model  
@@ -261,7 +262,7 @@ remove(usenet_data, corpus_stats, post_tokens, glove_words, glove_to_keep_indice
 tf_idf_dtm <- dfm_tfidf(dtm_reduced, 
                         scheme_tf = "prop") # for TF, use normalized counts (ie. proportions)
 
-# Since we will need to build word vector features, now for the training set, and 
+# Since we will need to build document features, now for the training set, and 
 # later on for the test set, it is better to pack the code into a function
 build_word_vec_features <- function(dtm, word_vec_df) {
   word_vec_feats <- data.frame()
@@ -312,7 +313,7 @@ rf_cv_1 <- cross_validate_classifier(seed,
 saveRDS(rf_cv_1, "models/glove/rf_cv_1.RData")
 
 # Load the saved model
-rf_cv_1 <- readRDS("models/glove/rf_cv_1.RData")
+# rf_cv_1 <- readRDS("models/glove/rf_cv_1.RData")
 
 # Check out the CV results
 rf_cv_1
@@ -386,7 +387,7 @@ train_idf <- apply(tf_idf_dtm, 2, inverse_doc_freq)
 
 # Next, calculate TF-IDF using the computed IDF values; normalize TF scores
 # before multiplying them with IDF values
-test_tfidf_dtm <-  test_tf_dfm %>%
+test_tfidf_dtm <- test_tf_dfm %>%
   dfm_weight(scheme = "prop") %>%
   apply(., 1, function(x) x*train_idf)
 dim(test_tfidf_dtm)
@@ -419,7 +420,7 @@ cm
 eval_metrics <- c('Sensitivity', 'Specificity', 'AUC')
 get_eval_measures(rf_cv_1, test_df, eval_metrics)
 
-# Let's compare these results with those obtained on the training data 
+# Compare the test results with those obtained on the training data 
 best_res[, c('Sens', 'Spec', 'ROC')]
 
 # The performance is somewhat weaker than on the training data set, 
@@ -473,33 +474,33 @@ rwmd_model = RWMD$new(wv = t(g6b_300d_df_reduced), method = "cosine")
 rwmd_dist_train_set <- dist2(x = dtm_reduced, method = rwmd_model, norm = "none") 
 dim(rwmd_dist_train_set)
 
+# NB: note that in the call of the dist2 function, norm parameter is set to 'none'
+# this is done as RWMD can be computed only on the raw word counts
+
 # Next, do the same but for train-test pairs, that is, for each document in the 
-# test set compute its distance from the document in the train set
+# test set compute its distance from the document in the train set (required for 
+# the kNN classifier)
 rwmd_dist_train_test <- dist2(x = test_tf_dfm, y = dtm_reduced,
                               method = rwmd_model, norm = 'none')
 dim(rwmd_dist_train_test)
-
-# NB: note that in the call of the dist2 function, norm parameter is set to 'none'
-# this is done as RWMD can be computed only on the raw word counts
 
 
 # To build a KNN classifier, we will use the *FastKNN* R package.
 # The reason for choosing this package is that it allows for building a KNN classifier
 # using precomputed distances, which is not the case with the often used knn() f. from 
 # the class package (and many other packages).
-# install.packages("FastKNN")
 library(FastKNN)
 
 # Use the training dataset to find the best value for K
 
-# We will run the kNN algorithm with a range of values for K,
+# We will run the kNN algorithm with a range of (odd) values for K,
 # compute evaluation metrics for each K value and eventually
 # choose the value that maximizes the evaluation metrics.
-knn_eval_df <- data.frame()
 train_labels <- word_vec_features$Label
+knn_eval_df <- data.frame()
 eval_metrics <- c("Sensitivity", "Specificity", "F1", "Accuracy", "Kappa")
-set.seed(seed)
 for(k in seq(from = 5, to = 35, by=2)) {
+  set.seed(seed)
   knn_res <- knn_training_function(dataset = dtm_reduced,
                                    distance = rwmd_dist_train_set,
                                    label = train_labels,
@@ -518,9 +519,6 @@ arrange(knn_eval_df, desc(F1))
 # (the higher the value for k, the higher susceptibility to overfitting).
 
 # Now, evaluate the model, with k=5, on the test set
-
-# The function we will use to test the kNN classifier requires a matrix with distances
-# between each observation of the test set and the training set
 knn_pred <- knn_test_function(dataset = dtm_reduced,
                               test = test_tf_dfm,
                               distance = rwmd_dist_train_test,
@@ -529,6 +527,7 @@ knn_pred <- knn_test_function(dataset = dtm_reduced,
 # Use the computed predictions and the test set labels to evaluate the model
 knn_eval <- confusionMatrix(data = as.factor(knn_pred), 
                             reference = test_df$Label)
+# (note: the extract_eval_measures() f. is defined in the tm_utils script)
 extract_eval_measures(knn_eval, eval_metrics)
 
 # Let's compare these results with those obtained with the RF model
@@ -536,14 +535,15 @@ extract_eval_measures(knn_eval, eval_metrics)
 get_eval_measures(rf_cv_1, test_df, eval_metrics)
 
 # The comparison suggests that this model (RWMD + kNN) is somewhat 
-# weaker than the one based on weighted average of word vectors and RF, but
-# still of comparable performance. 
+# weaker than the one based on weighted average of word vectors and RF
+# (according to all examined metrics except sensitivity), but still of
+# comparable performance. 
 
 
 # Suggestion: you may want to check the following article:
 # http://xplordat.com/2018/10/09/word-embeddings-and-document-vectors-part-2-classification/ 
 # since it presents a well done comparison of classifiers built for the 20 Newsgroups  
-# *multiclass* classification task, using: 
+# multiclass classification task, using: 
 # - traditional document vectors (ie. bag-of-words model) vs word vectors, 
 # - different word embeddings: word2vec, GloVe, and FastText; both pre-trained and custom built
 # - different options for text preprocessing

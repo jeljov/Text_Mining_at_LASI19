@@ -16,19 +16,7 @@
 ## news, and updates. It is still in active use with over 100K active newsgroups 
 ## (see: https://www.binsearch.info/groupinfo.php)
 ##
-## The dataset is publicly available from: http://qwone.com/~jason/20Newsgroups/
-##
-## Even though the 20 Newsgroup dataset allows for multiclass classification,
-## to make this example easier to follow and understand, we will limit ourselves 
-## to a binary classification task. In particular, we will focus on the groups 
-## discussing guns ('talk.politics.guns') and Mideast ('talk.politics.mideast'), 
-## within the broader 'politics' topic. Being topically closely related, 
-## the two groups will pose a challenge for a classifier - it is not an easy task 
-## to differentiate between groups of posts that are topically related and some 
-## vocabulary ovelap can be expected.
-## Note that the same procedure is applicable to multiclass classification, only the 
-## computation process would be more demanding and evaluation a bit more demanding. 
-
+## The dataset is publicly available from: http://qwone.com/~jason/20Newsgroups/ 
 
 ##############################################
 ## SET UP the SESSION: 

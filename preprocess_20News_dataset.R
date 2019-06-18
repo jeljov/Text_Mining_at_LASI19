@@ -17,6 +17,9 @@
 ## (see: https://www.binsearch.info/groupinfo.php)
 ##
 ## The dataset is publicly available from: http://qwone.com/~jason/20Newsgroups/ 
+## Note that the page provides 3 versions of the dataset; the one that should be 
+## downloaded is "20news-bydate.tar.gz" (here is a direct link: 
+## http://qwone.com/~jason/20Newsgroups/20news-bydate.tar.gz)
 
 ##############################################
 ## SET UP the SESSION: 

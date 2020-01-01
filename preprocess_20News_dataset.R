@@ -34,11 +34,11 @@
 # install.packages(c("<package_name_1>", "<package_name_2>", ...))
 
 # Load the required libraries
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(readr)
-library(stringr)
+library(dplyr) # v. 0.8.3
+library(tidyr) # v. 1.0.0.0
+library(purrr) # v. 0.3.2
+library(readr) # v. 1.3.1
+library(stringr) # v. 1.4.0
 
 # Load an R script with a set of auxiliary functions
 source("tm_utils.R")
@@ -57,12 +57,14 @@ test_folder <- "data/20news/20news-bydate-test"
 # Read in the contents of all posts from the train dataset
 # Note: read_folder() is a utility function defined in the tm_utils.R 
 raw_train_data <- tibble(folder = dir(training_folder, full.names = TRUE)) %>%
-  unnest(map(folder, read_folder)) %>%  # each mapping iteration results in a df; 
-                                        # unnest 'composes' individual dfs into a large df
+  mutate(folder_content = map(folder, read_folder)) %>%  # each mapping iteration results in a df; 
+  unnest(cols = one_of('folder_content')) %>%       # unnest 'composes' individual dfs into a large df
   transmute(newsgroup = basename(folder), id, content)
+
 # Do the same for the test dataset
 raw_test_data <- tibble(folder = dir(test_folder, full.names = TRUE)) %>%
-  unnest(map(folder, read_folder)) %>%
+  mutate(folder_content = map(folder, read_folder)) %>%
+  unnest(cols = one_of('folder_content')) %>%       
   transmute(newsgroup = basename(folder), id, content)
 
 # Examine the newsgroups that are included in the training and test datasets, 

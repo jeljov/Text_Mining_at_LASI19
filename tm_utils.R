@@ -9,7 +9,7 @@ read_folder <- function(infolder) {
   tibble(file = dir(infolder, full.names = TRUE)) %>%
     mutate(content = map(file, read_lines)) %>%
     transmute(id = basename(file), content) %>%
-    unnest(content)  # content is a list-column; unnest transforms each element of the list into a row
+    unnest(one_of('content'))  # content is a list-column; unnest transforms each element of the list into a row
 }
 
 

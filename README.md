@@ -23,7 +23,7 @@ Note also that some prebuilt models are available in the 'models' folder. They a
 The first and third topic are based on the [20 Newsgroups dataset](http://qwone.com/~jason/20Newsgroups/). This dataset, widely used in text mining tasks and benchmarks, is a collection of approximately 20,000 newsgroup documents (forum posts), partitioned (nearly) evenly across 20 different newsgroups, each corresponding to a different topic. The csv files, in the data/20news folder, are derived from this dataset (subsetted and pre-processed).
 
 Slides that introduce relevant concepts and methods are available at the links given below. The slides also cover some recent research work in Learning Analytics that was either partially or fully based on TM methods and techniques.  
-* [Text Mining (workflow) for Learning Content Analysis](https://1drv.ms/b/s!AjwXFgNk6IQbhEjcCCTn2XVQVmgK)
+* [Text Mining (workflow) for Learning Content Analysis](https://1drv.ms/p/s!AjwXFgNk6IQbiEZjXKBFZE-vMpUo?e=tRDeJt)
 * [Bagging and Random Forest](https://1drv.ms/b/s!AjwXFgNk6IQbgh5G-vQCyWnaXwZL)
 
 If interested in learning more, you may want to check materials from the [previous edition of this workshop](https://github.com/jeljov/Text_Mining_at_LASI18), held at [LASI'18](https://solaresearch.org/events/lasi/lasi-2018/).
